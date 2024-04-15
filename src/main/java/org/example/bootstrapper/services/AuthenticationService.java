@@ -1,9 +1,8 @@
 package org.example.bootstrapper.services;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.example.bootstrapper.File.FileServices;
-import org.example.bootstrapper.model.Admin;
 import org.example.bootstrapper.model.User;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 
@@ -13,18 +12,18 @@ import java.util.Optional;
 @Service
 public class AuthenticationService {
 
-    public boolean isAdmin(String username, String password) {
+    public boolean authenticateAdmin(String username, String password) {
         if (username == null || password == null) {
             throw new IllegalArgumentException("username or password is null");
         }
-        Optional<Admin> adminCredentialsOpt = FileServices.getAdminByUsername(username);
-        if (adminCredentialsOpt.isEmpty()) {
+        Optional<User> adminOptional = FileServices.getAdminByUsername(username);
+        if (adminOptional.isEmpty()) {
             return false;
         }
-        Admin adminCredentials = adminCredentialsOpt.get();
-        String fileUsername = adminCredentials.getUsername();
-        String hashedPassword = PasswordHashing.hashPassword(password);  //to compare hashed passwords
-        String storedPassword = adminCredentials.getPassword();
+        User admin = adminOptional.get();
+        String fileUsername = admin.getUsername();
+        String hashedPassword = PasswordHashing.hashPassword(password);
+        String storedPassword = admin.getPassword();
         return fileUsername.equals(username) && storedPassword.equals(hashedPassword);
     }
 
@@ -32,13 +31,13 @@ public class AuthenticationService {
         return FileServices.getAdminByUsername(username).isPresent();
     }
 
-    public boolean isCustomerExists(User user) {
+    public boolean customerExists(User user) {
         if (user == null || user.getUsername() == null) {
             return false;
         }
         File jsonFile = FileServices.getUsersFile();
         if (jsonFile.exists()) {
-            JSONArray jsonArray = FileServices.readJsonArrayFile(jsonFile);
+            ArrayNode jsonArray = FileServices.readJsonArrayFile(jsonFile);
             if (jsonArray != null) {
                 for (Object obj : jsonArray) {
                     JSONObject userObject = (JSONObject) obj;

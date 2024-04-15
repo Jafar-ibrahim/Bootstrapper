@@ -2,7 +2,6 @@ package org.example.bootstrapper.Controller;
 
 import lombok.extern.log4j.Log4j2;
 import org.example.bootstrapper.Enum.Role;
-import org.example.bootstrapper.model.Admin;
 import org.example.bootstrapper.model.User;
 import org.example.bootstrapper.services.AuthenticationService;
 import org.example.bootstrapper.services.UserService;
@@ -24,28 +23,28 @@ public class UserController {
     }
 
     @PostMapping("/add/customer")
-    public String addCustomer(@RequestHeader("accountNumber") String accountNumber,
-                          @RequestHeader("password") String password,
-                          @RequestHeader("adminUsername") String adminUsername,
-                          @RequestHeader("adminPassword") String adminPassword) {
-        if(!authenticationService.isAdmin(adminUsername, adminPassword)){
+    public String addCustomer(@RequestParam("accountNumber") String accountNumber,
+                          @RequestParam("password") String password,
+                          @RequestParam("adminUsername") String adminUsername,
+                          @RequestParam("adminPassword") String adminPassword) {
+        if(!authenticationService.authenticateAdmin(adminUsername, adminPassword)){
             return "User is not authorized";
         }
         log.info("Received request to register a new customer with account number: " + accountNumber);
         User user = new User(accountNumber, password, Role.NORMAL_USER);
-        if (authenticationService.isCustomerExists(user)) {
+        if (authenticationService.customerExists(user)) {
             return "Customer already exists";
         }
-        userService.addUser(user);
+        userService.addUser(user,adminUsername,adminPassword);
         return "Customer has been added successfully";
     }
 
     @DeleteMapping ("/delete/customer")
-    public String deleteCustomer(@RequestHeader("accountNumber") String accountNumber,
-                                 @RequestHeader("adminUsername") String adminUsername,
-                                 @RequestHeader("adminPassword") String adminPassword) {
+    public String deleteCustomer(@RequestParam("accountNumber") String accountNumber,
+                                 @RequestParam("adminUsername") String adminUsername,
+                                 @RequestParam("adminPassword") String adminPassword) {
 
-        if(!authenticationService.isAdmin(adminUsername, adminPassword)){
+        if(!authenticationService.authenticateAdmin(adminUsername, adminPassword)){
             return "User is not authorized";
         }
 
@@ -56,8 +55,8 @@ public class UserController {
 
 
     @PostMapping("/add/admin")
-    public String addAdmin(@RequestHeader("username") String username,
-                           @RequestHeader("password") String password) {
+    public String addAdmin(@RequestParam("username") String username,
+                           @RequestParam("password") String password) {
         log.info("Received request to register the admin with username: " + username);
         if(authenticationService.adminExists(username)){
             return "Admin already exists";

@@ -26,19 +26,20 @@ public class UserService {
         this.loadBalancer = loadBalancer;
     }
 
-    public void addUser(User user) {
+    public void addUser(User user,String adminUsername,String adminPassword) {
         Node node = loadBalancer.assignUserToNextNode(user.getUsername());
 
         FileServices.saveUser(user.toJson());
-        String url = "http://" + node.getNodeIP() + ":9000/api/add/customer";
+        String url = "http://" + node.getNodeIP() + ":9000/api/users";
 
         Map<String, String> params = new HashMap<>();
         params.put("username", user.getUsername());
         params.put("password", user.getPassword());
-        params.put("adminUsername", "admin");
-        params.put("adminPassword", "admin@12345");
+
 
         HttpHeaders headers = new HttpHeaders();
+        headers.add("adminUsername", adminUsername);
+        headers.add("adminPassword", adminPassword);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(params, headers);
 
@@ -53,16 +54,16 @@ public class UserService {
         // delete from bootstrapper
         FileServices.deleteUser(username);
         loadBalancer.balanceExistingUsers();
-        String url = "http://" + loadBalancer.getUserNode(username).getNodeIP() + ":9000/api/delete/customer";
+        String url = "http://" + loadBalancer.getUserNode(username).getNodeIP() + ":9000/api/users";
 
         // Create a map for the parameters
         Map<String, String> params = new HashMap<>();
         params.put("username", username);
-        params.put("adminUsername",adminUsername );
-        params.put("adminPassword", adminPassword);
 
         // Set the headers
         HttpHeaders headers = new HttpHeaders();
+        headers.add("adminUsername", adminUsername);
+        headers.add("adminPassword", adminPassword);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(params, headers);
 
@@ -83,7 +84,7 @@ public class UserService {
 
         for(int i = 1; i <= NodesCluster.CLUSTER_SIZE; i++) {
             Node node = loadBalancer.assignUserToNextNode(admin.getUsername());
-            String url = "http://" + node.getNodeIP() + ":9000/api/add/admin";
+            String url = "http://" + node.getNodeIP() + ":9000/api/admins";
 
             HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(params, headers);
 

@@ -1,5 +1,7 @@
 package org.example.bootstrapper.model;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.example.bootstrapper.Enum.Role;
 import org.example.bootstrapper.services.PasswordHashing;
 import org.json.simple.JSONObject;
@@ -30,8 +32,9 @@ public class User {
     }
 
     @SuppressWarnings("unchecked")
-    public JSONObject toJson() {
-        JSONObject userJson = new JSONObject();
+    public ObjectNode toJson() {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode userJson = mapper.createObjectNode();
         userJson.put("username", username);
         userJson.put("password", password);
         userJson.put("role", role.toString());

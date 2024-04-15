@@ -1,5 +1,6 @@
 package org.example.bootstrapper.loadbalancer;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.log4j.Log4j2;
 import org.example.bootstrapper.File.FileServices;
 import org.example.bootstrapper.model.Node;
@@ -29,7 +30,7 @@ public class LoadBalancer {
 
     public void balanceExistingUsers() {
         log.info("Balancing existing users between the nodes...");
-        JSONArray usersArray;
+        ArrayNode usersArray;
         try {
             usersArray = FileServices.readJsonArrayFile(FileServices.getUsersFile());
         } catch (Exception e) {
