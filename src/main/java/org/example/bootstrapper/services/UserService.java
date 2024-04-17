@@ -1,9 +1,8 @@
 package org.example.bootstrapper.services;
 
 import lombok.extern.log4j.Log4j2;
-import org.example.bootstrapper.File.FileServices;
+import org.example.bootstrapper.File.FileService;
 import org.example.bootstrapper.loadbalancer.LoadBalancer;
-import org.example.bootstrapper.model.Admin;
 import org.example.bootstrapper.model.User;
 import org.example.bootstrapper.model.Node;
 import org.example.bootstrapper.services.network.NodesCluster;
@@ -14,7 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+
 @Log4j2
 @Service
 public class UserService {
@@ -29,7 +28,7 @@ public class UserService {
     public void addUser(User user,String adminUsername,String adminPassword) {
         Node node = loadBalancer.assignUserToNextNode(user.getUsername());
 
-        FileServices.saveUser(user.toJson());
+        FileService.saveUser(user.toJson());
         String url = "http://" + node.getNodeIP() + ":9000/api/users";
 
         Map<String, String> params = new HashMap<>();
@@ -52,7 +51,7 @@ public class UserService {
 
     public void deleteUser(String username,String adminUsername,String adminPassword) {
         // delete from bootstrapper
-        FileServices.deleteUser(username);
+        FileService.deleteUser(username);
         loadBalancer.balanceExistingUsers();
         String url = "http://" + loadBalancer.getUserNode(username).getNodeIP() + ":9000/api/users";
 
@@ -74,7 +73,7 @@ public class UserService {
     }
 
     public void addAdmin(User admin) {
-        FileServices.saveUser(admin.toJson());
+        FileService.saveUser(admin.toJson());
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

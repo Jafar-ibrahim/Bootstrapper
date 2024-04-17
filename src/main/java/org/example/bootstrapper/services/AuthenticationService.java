@@ -1,7 +1,7 @@
 package org.example.bootstrapper.services;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.example.bootstrapper.File.FileServices;
+import org.example.bootstrapper.File.FileService;
 import org.example.bootstrapper.model.User;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ public class AuthenticationService {
         if (username == null || password == null) {
             throw new IllegalArgumentException("username or password is null");
         }
-        Optional<User> adminOptional = FileServices.getAdminByUsername(username);
+        Optional<User> adminOptional = FileService.getAdminByUsername(username);
         if (adminOptional.isEmpty()) {
             return false;
         }
@@ -28,16 +28,16 @@ public class AuthenticationService {
     }
 
     public boolean adminExists(String username) {
-        return FileServices.getAdminByUsername(username).isPresent();
+        return FileService.getAdminByUsername(username).isPresent();
     }
 
-    public boolean customerExists(User user) {
+    public boolean userExists(User user) {
         if (user == null || user.getUsername() == null) {
             return false;
         }
-        File jsonFile = FileServices.getUsersFile();
+        File jsonFile = FileService.getUsersFile();
         if (jsonFile.exists()) {
-            ArrayNode jsonArray = FileServices.readJsonArrayFile(jsonFile);
+            ArrayNode jsonArray = FileService.readJsonArrayFile(jsonFile);
             if (jsonArray != null) {
                 for (Object obj : jsonArray) {
                     JSONObject userObject = (JSONObject) obj;

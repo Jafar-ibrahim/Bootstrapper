@@ -20,7 +20,7 @@ public class WorkerService {
         if (node != null) {
             return String.valueOf(node.getNodeId());
         } else {
-            return "Customer not found on any worker";
+            return "User not found on any worker";
         }
     }
 }

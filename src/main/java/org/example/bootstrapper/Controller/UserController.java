@@ -22,25 +22,25 @@ public class UserController {
         this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/add/customer")
-    public String addCustomer(@RequestParam("accountNumber") String accountNumber,
+    @PostMapping("/add/user")
+    public String addUser(@RequestParam("username") String username,
                           @RequestParam("password") String password,
                           @RequestParam("adminUsername") String adminUsername,
                           @RequestParam("adminPassword") String adminPassword) {
         if(!authenticationService.authenticateAdmin(adminUsername, adminPassword)){
             return "User is not authorized";
         }
-        log.info("Received request to register a new customer with account number: " + accountNumber);
-        User user = new User(accountNumber, password, Role.NORMAL_USER);
-        if (authenticationService.customerExists(user)) {
-            return "Customer already exists";
+        log.info("Received request to register a new user with username: " + username);
+        User user = new User(username, password, Role.NORMAL_USER);
+        if (authenticationService.userExists(user)) {
+            return "User already exists";
         }
         userService.addUser(user,adminUsername,adminPassword);
-        return "Customer has been added successfully";
+        return "User has been added successfully";
     }
 
-    @DeleteMapping ("/delete/customer")
-    public String deleteCustomer(@RequestParam("accountNumber") String accountNumber,
+    @DeleteMapping ("/delete/user")
+    public String deleteUser(@RequestParam("username") String username,
                                  @RequestParam("adminUsername") String adminUsername,
                                  @RequestParam("adminPassword") String adminPassword) {
 
@@ -48,9 +48,9 @@ public class UserController {
             return "User is not authorized";
         }
 
-        log.info("Received request to delete the customer with account number: " + accountNumber);
-        userService.deleteUser(accountNumber,adminUsername,adminPassword);
-        return "customer has been deleted successfully";
+        log.info("Received request to delete the user with username: " + username);
+        userService.deleteUser(username,adminUsername,adminPassword);
+        return "user has been deleted successfully";
     }
 
 

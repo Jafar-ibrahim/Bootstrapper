@@ -2,14 +2,14 @@ package org.example.bootstrapper.loadbalancer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.log4j.Log4j2;
-import org.example.bootstrapper.File.FileServices;
+import org.example.bootstrapper.File.FileService;
 import org.example.bootstrapper.model.Node;
 import org.example.bootstrapper.services.network.NodesCluster;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,14 +25,19 @@ public class LoadBalancer {
     @Autowired
     public LoadBalancer(NodesCluster nodesCluster){
         nodesQueue.addAll(nodesCluster.getNodes());
-        log.info("LoadBalancer initialized with {} nodes", nodesCluster.getNodes().size());
+        log.info("LoadBalancer initialized with {} nodes", nodesQueue.size());
     }
 
     public void balanceExistingUsers() {
         log.info("Balancing existing users between the nodes...");
         ArrayNode usersArray;
+        File usersFile = FileService.getUsersFile();
+        if (!usersFile.exists()) {
+            log.warn("Users file not found. Skipping user balancing.");
+            return;
+        }
         try {
-            usersArray = FileServices.readJsonArrayFile(FileServices.getUsersFile());
+            usersArray = FileService.readJsonArrayFile(FileService.getUsersFile());
         } catch (Exception e) {
             log.error("Error reading user data from file", e);
             return;

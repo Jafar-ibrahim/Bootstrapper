@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.log4j.Log4j2;
 import org.example.bootstrapper.Enum.Role;
-import org.example.bootstrapper.model.Admin;
 import org.example.bootstrapper.model.User;
 import org.springframework.stereotype.Service;
 
@@ -17,13 +16,11 @@ import java.util.Optional;
 
 @Log4j2
 @Service
-public final class FileServices {
+public final class FileService {
     private static final String USERS_FILE_PATH ="src/main/resources/dbData/users.json";
     private static final String ADMINS_FILE_PATH ="src/main/resources/dbData/admins.json";
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private FileServices(){
-    }
 
     public static void saveUser(ObjectNode userJson) {
         Role role = Role.valueOf(userJson.get("role").asText());
@@ -45,7 +42,7 @@ public final class FileServices {
         return mapper.createArrayNode();
     }
 
-    private static void createDirectoriesIfNotExist() {
+    public static void createDirectoriesIfNotExist() {
         try {
             Files.createDirectories(Path.of(USERS_FILE_PATH).getParent());
         } catch (IOException e) {

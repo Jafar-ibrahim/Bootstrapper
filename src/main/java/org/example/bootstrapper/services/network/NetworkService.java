@@ -10,26 +10,22 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Log4j2
 @Service
 public class NetworkService {
 
     private final NodesCluster nodesCluster;
-    private final LoadBalancer loadBalancer;
 
     @Autowired
-    public NetworkService(NodesCluster nodesCluster, LoadBalancer loadBalancer){
+    public NetworkService(NodesCluster nodesCluster){
         this.nodesCluster = nodesCluster;
-        this.loadBalancer = loadBalancer;
     }
 
 
-    public void run() {
+    public void init() {
         createNetwork();
         checkClusterStatus();
+        LoadBalancer loadBalancer = new LoadBalancer(nodesCluster);
         loadBalancer.balanceExistingUsers();
     }
 
@@ -47,7 +43,7 @@ public class NetworkService {
         for (Node node : nodesCluster.getNodes()) {
             try {
                 String url = "http://" + node.getNodeIP() + ":9000/api/node/info";
-                HttpEntity<Map<String, String>> entity = getMapHttpEntity(node);
+                HttpEntity<MultiValueMap<String, String>> entity = getMapHttpEntity(node);
 
                 RestTemplate restTemplate = new RestTemplate();
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
@@ -64,14 +60,14 @@ public class NetworkService {
         }
     }
 
-    private static HttpEntity<Map<String, String>> getMapHttpEntity(Node node) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("nodeId", String.valueOf(node.getNodeId()));
-        parameters.put("nodeIP", node.getNodeIP());
-        parameters.put("isActive", "true");
+    private static HttpEntity<MultiValueMap<String, String>> getMapHttpEntity(Node node) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("nodeId", String.valueOf(node.getNodeId()));
+        parameters.add("nodeIP", node.getNodeIP());
+        parameters.add("isActive", "true");
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type", "application/x-www-form-urlencoded");
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         return new HttpEntity<>(parameters, headers);
     }
