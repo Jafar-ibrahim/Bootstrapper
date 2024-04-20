@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.log4j.Log4j2;
 import org.example.bootstrapper.Enum.Role;
-import org.example.bootstrapper.model.User;
+import org.example.bootstrapper.Model.User;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -22,16 +22,16 @@ public final class FileService {
     private static final ObjectMapper mapper = new ObjectMapper();
 
 
-    public static void saveUser(ObjectNode userJson) {
+    public void saveUser(ObjectNode userJson) {
         Role role = Role.valueOf(userJson.get("role").asText());
         String path = (role == Role.ADMIN) ? ADMINS_FILE_PATH : USERS_FILE_PATH;
-        ArrayNode jsonArray = getExistingUsers(path);
+        ArrayNode jsonArray = getUsersFromFile(path);
         jsonArray.add(userJson);
         createDirectoriesIfNotExist();
         writeJsonArrayFile(new File(path), jsonArray);
     }
 
-    private static ArrayNode getExistingUsers(String path) {
+    public ArrayNode getUsersFromFile(String path) {
         if (isFileExists(path)) {
             try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
                 return (ArrayNode) mapper.readTree(reader);
@@ -41,8 +41,11 @@ public final class FileService {
         }
         return mapper.createArrayNode();
     }
+    public ArrayNode getAllNormalUsers(){
+        return getUsersFromFile(USERS_FILE_PATH);
+    }
 
-    public static void createDirectoriesIfNotExist() {
+    public void createDirectoriesIfNotExist() {
         try {
             Files.createDirectories(Path.of(USERS_FILE_PATH).getParent());
         } catch (IOException e) {
@@ -50,7 +53,7 @@ public final class FileService {
         }
     }
 
-    public static void deleteUser(String username) {
+    public void deleteUser(String username) {
         ArrayNode jsonArray = readJsonArrayFile(getUsersFile());
         if (jsonArray == null) return;
 
@@ -58,7 +61,7 @@ public final class FileService {
         writeJsonArrayFile(getUsersFile(), jsonArray);
     }
 
-    private static int indexOf(ArrayNode arrayNode, String username) {
+    private int indexOf(ArrayNode arrayNode, String username) {
         for (int i = 0; i < arrayNode.size(); i++) {
             if (arrayNode.get(i).get("username").asText().equals(username)) {
                 return i;
@@ -67,8 +70,8 @@ public final class FileService {
         return -1;
     }
 
-    public static Optional<User> getAdminByUsername(String username) {
-        ArrayNode jsonArray = getExistingUsers(ADMINS_FILE_PATH);
+    public Optional<User> getAdminByUsername(String username) {
+        ArrayNode jsonArray = getUsersFromFile(ADMINS_FILE_PATH);
         for (int i = 0; i < jsonArray.size(); i++) {
             ObjectNode userObject = (ObjectNode) jsonArray.get(i);
             String adminUsername = userObject.get("username").asText();
@@ -80,12 +83,12 @@ public final class FileService {
         return Optional.empty();
     }
 
-    public static boolean isFileExists(String filePath){
+    public boolean isFileExists(String filePath){
         Path path = Paths.get(filePath);
         return Files.exists(path);
     }
 
-    public static ArrayNode readJsonArrayFile(File file) {
+    public ArrayNode readJsonArrayFile(File file) {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             if (file.length() == 0) {
                 return mapper.createArrayNode();
@@ -98,7 +101,7 @@ public final class FileService {
         }
     }
 
-    public static void writeJsonArrayFile(File file, ArrayNode jsonArray) {
+    public void writeJsonArrayFile(File file, ArrayNode jsonArray) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(mapper.writeValueAsString(jsonArray));
         } catch (IOException e) {
@@ -107,11 +110,9 @@ public final class FileService {
         }
     }
 
-    public static File getUsersFile(){
+    public File getUsersFile(){
         return new File(USERS_FILE_PATH);
     }
 
-    public static String adminJsonFilePath(){
-        return "src/main/resources/static/admin.json";
-    }
+
 }

@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-EXPOSE 8081
+EXPOSE 8080
 
-CMD ["java", "-jar", "target/Bootstrapper-1.0.jar"]
+CMD ["java", "-jar", "target/Bootstrapper.jar"]

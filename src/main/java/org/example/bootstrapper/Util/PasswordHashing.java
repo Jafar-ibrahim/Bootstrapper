@@ -1,4 +1,4 @@
-package org.example.bootstrapper.services;
+package org.example.bootstrapper.Util;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -19,5 +19,9 @@ public final class PasswordHashing {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 algorithm not available.", e);
         }
+    }
+
+    public static boolean verifyPassword(String password, String hashedPassword) {
+        return hashPassword(password).equals(hashedPassword);
     }
 }

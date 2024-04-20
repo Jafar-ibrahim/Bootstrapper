@@ -1,21 +1,21 @@
-package org.example.bootstrapper.services;
+package org.example.bootstrapper.Service;
 
-import org.example.bootstrapper.loadbalancer.LoadBalancer;
-import org.example.bootstrapper.model.Node;
+import org.example.bootstrapper.Loadbalancer.LoadBalancer;
+import org.example.bootstrapper.Model.Node;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class WorkerService {
+public class NodesService {
 
     private final LoadBalancer loadBalancer;
 
     @Autowired
-    public WorkerService(LoadBalancer loadBalancer){
+    public NodesService(LoadBalancer loadBalancer){
         this.loadBalancer = loadBalancer;
     }
 
-    public String getWorkerForUser(String username){
+    public String getWorkerIdForUser(String username){
         Node node = loadBalancer.getUserNode(username);
         if (node != null) {
             return String.valueOf(node.getNodeId());

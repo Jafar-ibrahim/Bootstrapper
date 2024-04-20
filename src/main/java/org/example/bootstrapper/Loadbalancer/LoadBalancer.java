@@ -1,11 +1,11 @@
-package org.example.bootstrapper.loadbalancer;
+package org.example.bootstrapper.Loadbalancer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.log4j.Log4j2;
 import org.example.bootstrapper.File.FileService;
-import org.example.bootstrapper.model.Node;
-import org.example.bootstrapper.services.network.NodesCluster;
-import org.json.simple.JSONObject;
+import org.example.bootstrapper.Model.Node;
+import org.example.bootstrapper.Service.Network.NodesClusterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,23 +21,29 @@ public class LoadBalancer {
     private final ConcurrentHashMap<Node, CopyOnWriteArrayList<String>> nodeUsers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Node> userNodeMap = new ConcurrentHashMap<>();
     private final ConcurrentLinkedQueue<Node> nodesQueue = new ConcurrentLinkedQueue<>();
+    private final FileService fileService;
+    private final NodesClusterService nodesClusterService;
 
     @Autowired
-    public LoadBalancer(NodesCluster nodesCluster){
-        nodesQueue.addAll(nodesCluster.getNodes());
+    public LoadBalancer(FileService fileService, NodesClusterService nodesClusterService) {
+        this.fileService = fileService;
+        this.nodesClusterService = nodesClusterService;
+    }
+    public void init(){
+        nodesQueue.addAll(nodesClusterService.getNodes());
         log.info("LoadBalancer initialized with {} nodes", nodesQueue.size());
     }
 
     public void balanceExistingUsers() {
         log.info("Balancing existing users between the nodes...");
         ArrayNode usersArray;
-        File usersFile = FileService.getUsersFile();
+        File usersFile = fileService.getUsersFile();
         if (!usersFile.exists()) {
             log.warn("Users file not found. Skipping user balancing.");
             return;
         }
         try {
-            usersArray = FileService.readJsonArrayFile(FileService.getUsersFile());
+            usersArray = fileService.readJsonArrayFile(fileService.getUsersFile());
         } catch (Exception e) {
             log.error("Error reading user data from file", e);
             return;
@@ -49,8 +55,8 @@ public class LoadBalancer {
         }
 
         for (Object obj : usersArray) {
-            JSONObject userJson = (JSONObject) obj;
-            String username = (String) userJson.get("username");
+            ObjectNode userJson = (ObjectNode) obj;
+            String username = String.valueOf(userJson.get("username"));
             this.assignUserToNextNode(username);
         }
         log.info("Finished balancing {} users", usersArray.size());
@@ -63,6 +69,7 @@ public class LoadBalancer {
         log.info("Assigned user {} to node {}", username, node.getNodeId());
         return node;
     }
+
 
     public Node getNextNode() {
         if (nodesQueue.isEmpty()) {
@@ -80,8 +87,24 @@ public class LoadBalancer {
         if (node == null) {
             log.warn("No node found for user {}", username);
         } else {
-            log.info("Node {} found for user {}", node.getNodeId(), username);
+            log.info("Node {} is user {}'s node", node.getNodeId(), username);
         }
         return node;
+    }
+
+    public void deleteUserFromNode(String username) {
+        Node node = userNodeMap.get(username);
+        if (node == null) {
+            log.error("No node found for user {}", username);
+            return;
+        }
+        CopyOnWriteArrayList<String> users = nodeUsers.get(node);
+        if (users == null) {
+            log.error("No users found for node {}", node.getNodeId());
+            return;
+        }
+        users.remove(username);
+        userNodeMap.remove(username);
+        log.info("User {} deleted from node {}", username, node.getNodeId());
     }
 }

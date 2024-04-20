@@ -1,13 +1,13 @@
-package org.example.bootstrapper.model;
+package org.example.bootstrapper.Model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.example.bootstrapper.Enum.Role;
-import org.example.bootstrapper.services.PasswordHashing;
-import org.json.simple.JSONObject;
 
-
-
+@Data
 public class User {
     private final String username;
     private String password;
@@ -17,18 +17,6 @@ public class User {
         this.username = username;
         setPassword(password);
         this.role = role;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = PasswordHashing.hashPassword(password);
     }
 
     @SuppressWarnings("unchecked")

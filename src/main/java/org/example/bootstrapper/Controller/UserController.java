@@ -2,67 +2,92 @@ package org.example.bootstrapper.Controller;
 
 import lombok.extern.log4j.Log4j2;
 import org.example.bootstrapper.Enum.Role;
-import org.example.bootstrapper.model.User;
-import org.example.bootstrapper.services.AuthenticationService;
-import org.example.bootstrapper.services.UserService;
+import org.example.bootstrapper.Loadbalancer.LoadBalancer;
+import org.example.bootstrapper.Model.Node;
+import org.example.bootstrapper.Model.User;
+import org.example.bootstrapper.Model.UserDTO;
+import org.example.bootstrapper.Service.AuthenticationService;
+import org.example.bootstrapper.Service.NodesService;
+import org.example.bootstrapper.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @Log4j2
 @RestController
-@RequestMapping("/bootstrapper")
+@RequestMapping("/bootstrapper/users")
 public class UserController {
 
     private final UserService userService;
-
+    private final LoadBalancer loadBalancer;
     private final AuthenticationService authenticationService;
 
     @Autowired
-    public UserController(UserService userService, AuthenticationService authenticationService){
+    public UserController(UserService userService, LoadBalancer loadBalancer, AuthenticationService authenticationService) {
         this.userService = userService;
+        this.loadBalancer = loadBalancer;
         this.authenticationService = authenticationService;
     }
+    @PreAuthorize("@authenticationService.authenticateAdmin(#adminUsername, #adminPassword)")
+    @PostMapping("/{username}")
+    public ResponseEntity<String> addUser(@PathVariable("username") String username,
+                                          @RequestHeader("password") String password,
+                                          @RequestHeader("role") Role role,
+                                          @RequestHeader("adminUsername") String adminUsername,
+                                          @RequestHeader("adminPassword") String adminPassword) {
 
-    @PostMapping("/add/user")
-    public String addUser(@RequestParam("username") String username,
-                          @RequestParam("password") String password,
-                          @RequestParam("adminUsername") String adminUsername,
-                          @RequestParam("adminPassword") String adminPassword) {
+        log.info("Received request to register a new user with username: " + username+" and role: "+role);
         if(!authenticationService.authenticateAdmin(adminUsername, adminPassword)){
-            return "User is not authorized";
+            log.error("User is not authorized");
+            return new ResponseEntity<>("User is not authorized", HttpStatus.UNAUTHORIZED);
         }
-        log.info("Received request to register a new user with username: " + username);
-        User user = new User(username, password, Role.NORMAL_USER);
-        if (authenticationService.userExists(user)) {
-            return "User already exists";
+
+        User user = new User(username, password, role);
+        if (authenticationService.userExists(username) || authenticationService.adminExists(username)) {
+            log.error("User already exists");
+            return new ResponseEntity<>("User already exists", HttpStatus.CONFLICT);
         }
-        userService.addUser(user,adminUsername,adminPassword);
-        return "User has been added successfully";
+        if (role == Role.ADMIN ) {
+            userService.addAdmin(user,adminUsername,adminPassword);
+        }else {
+            userService.addUser(user,adminUsername,adminPassword);
+        }
+        return new ResponseEntity<>("User has been added successfully with username: " + username+" and role: "+role, HttpStatus.CREATED);
     }
 
-    @DeleteMapping ("/delete/user")
-    public String deleteUser(@RequestParam("username") String username,
-                                 @RequestParam("adminUsername") String adminUsername,
-                                 @RequestParam("adminPassword") String adminPassword) {
-
-        if(!authenticationService.authenticateAdmin(adminUsername, adminPassword)){
-            return "User is not authorized";
-        }
+    @PreAuthorize("@authenticationService.authenticateAdmin(#adminUsername, #adminPassword)")
+    @DeleteMapping ("/{username}")
+    public ResponseEntity<String> deleteUser(@PathVariable("username") String username,
+                                             @RequestHeader("adminUsername") String adminUsername,
+                                             @RequestHeader("adminPassword") String adminPassword) {
 
         log.info("Received request to delete the user with username: " + username);
-        userService.deleteUser(username,adminUsername,adminPassword);
-        return "user has been deleted successfully";
-    }
-
-
-    @PostMapping("/add/admin")
-    public String addAdmin(@RequestParam("username") String username,
-                           @RequestParam("password") String password) {
-        log.info("Received request to register the admin with username: " + username);
-        if(authenticationService.adminExists(username)){
-            return "Admin already exists";
+        if(!authenticationService.authenticateAdmin(adminUsername, adminPassword)){
+            log.error("User is not authorized");
+            return new ResponseEntity<>("User is not authorized", HttpStatus.UNAUTHORIZED);
         }
-        User admin = new User(username, password, Role.ADMIN);
-        userService.addAdmin(admin);
-        return "admin has been added successfully";
+
+        log.info("Received request to delete the user with username: " + username+" by admin: "+adminUsername);
+        userService.deleteUser(username,adminUsername,adminPassword);
+        return new ResponseEntity<>("User with username ("+username+") has been deleted successfully", HttpStatus.OK);
+    }
+    @GetMapping("/{username}/node")
+    public ResponseEntity<String> getNodeForUser(@PathVariable String username) {
+        Node userNode = loadBalancer.getUserNode(username);
+        if(userNode == null) {
+            return new ResponseEntity<>("Could not find node Id for user: " + username, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(String.valueOf(userNode.getNodeId()), HttpStatus.OK);
+    }
+    @PreAuthorize("@authenticationService.authenticateAdmin(#adminUsername, #adminPassword)")
+    @GetMapping
+    public ResponseEntity<List<UserDTO>> getAllUsers(@RequestHeader("adminUsername") String adminUsername,
+                                                     @RequestHeader("adminPassword") String adminPassword) {
+        List<UserDTO> users = userService.getAllUsers();
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 }
