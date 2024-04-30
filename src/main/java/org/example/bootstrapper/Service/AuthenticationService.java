@@ -30,7 +30,6 @@ public class AuthenticationService {
         }
         Optional<User> adminOptional = fileService.getAdminByUsername(username);
         if (adminOptional.isEmpty()) {
-            System.out.println("Admin not found");
             return false;
         }
         User admin = adminOptional.get();
