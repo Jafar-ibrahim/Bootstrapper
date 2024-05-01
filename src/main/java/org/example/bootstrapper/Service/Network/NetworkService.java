@@ -91,6 +91,10 @@ public class NetworkService {
     }
 
     private void checkClusterStatus() {
-        nodesClusterService.getNodes().forEach(node -> log.info("Node " + node.getNodeId() + " is " + (node.isActive() ? "active." : "not active.")));
+        nodesClusterService.getNodes()
+                .forEach(node ->
+                        log.info("Node " + node.getNodeId() + " is " + (node.isActive() ?
+                                                                                "up and running." :
+                                                                                "down.")));
     }
 }
