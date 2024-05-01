@@ -18,7 +18,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Service
 public class LoadBalancer {
 
-    private final ConcurrentHashMap<Node, CopyOnWriteArrayList<String>> nodeUsers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Node> userNodeMap = new ConcurrentHashMap<>();
     private final ConcurrentLinkedQueue<Node> nodesQueue = new ConcurrentLinkedQueue<>();
     private final FileService fileService;
@@ -64,7 +63,6 @@ public class LoadBalancer {
 
     public Node assignUserToNextNode(String username) {
         Node node = getNextNode();
-        nodeUsers.computeIfAbsent(node, k -> new CopyOnWriteArrayList<>()).add(username);
         userNodeMap.put(username, node);
         log.info("Assigned user {} to node {}", username, node.getNodeId());
         return node;
@@ -98,12 +96,7 @@ public class LoadBalancer {
             log.error("No node found for user {}", username);
             return;
         }
-        CopyOnWriteArrayList<String> users = nodeUsers.get(node);
-        if (users == null) {
-            log.error("No users found for node {}", node.getNodeId());
-            return;
-        }
-        users.remove(username);
+
         userNodeMap.remove(username);
         log.info("User {} deleted from node {}", username, node.getNodeId());
     }
