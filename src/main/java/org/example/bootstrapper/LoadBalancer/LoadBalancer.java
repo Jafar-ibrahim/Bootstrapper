@@ -1,4 +1,4 @@
-package org.example.bootstrapper.Loadbalancer;
+package org.example.bootstrapper.LoadBalancer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

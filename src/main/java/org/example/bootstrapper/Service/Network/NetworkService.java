@@ -1,7 +1,7 @@
 package org.example.bootstrapper.Service.Network;
 
 import lombok.extern.log4j.Log4j2;
-import org.example.bootstrapper.Loadbalancer.LoadBalancer;
+import org.example.bootstrapper.LoadBalancer.LoadBalancer;
 import org.example.bootstrapper.Model.Node;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;

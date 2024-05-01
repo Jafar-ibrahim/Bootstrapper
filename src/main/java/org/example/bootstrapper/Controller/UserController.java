@@ -2,12 +2,11 @@ package org.example.bootstrapper.Controller;
 
 import lombok.extern.log4j.Log4j2;
 import org.example.bootstrapper.Enum.Role;
-import org.example.bootstrapper.Loadbalancer.LoadBalancer;
+import org.example.bootstrapper.LoadBalancer.LoadBalancer;
 import org.example.bootstrapper.Model.Node;
 import org.example.bootstrapper.Model.User;
 import org.example.bootstrapper.Model.UserDTO;
 import org.example.bootstrapper.Service.AuthenticationService;
-import org.example.bootstrapper.Service.NodesService;
 import org.example.bootstrapper.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
